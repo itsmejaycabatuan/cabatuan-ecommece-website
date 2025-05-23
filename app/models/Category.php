@@ -32,6 +32,13 @@ class Category extends Database
 
         return $this->db->lastInsertId(); // Return the ID of the newly inserted category
     }
-
+public function getStaticCategories()
+{
+    return [
+        ['id' => 1, 'name' => 'Electronics'],
+        ['id' => 2, 'name' => 'Clothing'],
+        ['id' => 3, 'name' => 'Books'],
+    ];
+}
 
 }

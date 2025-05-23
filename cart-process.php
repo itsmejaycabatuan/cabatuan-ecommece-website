@@ -1,31 +1,50 @@
 <?php
-   
-   require 'vendor/autoload.php';
+session_start();
+require 'vendor/autoload.php';
 
-    use Aries\MiniFrameworkStore\Models\Product;
+use Aries\MiniFrameworkStore\Models\Product;
 
-    session_start();
+header('Content-Type: application/json');
 
-    $product_id = intval($_POST['productId']);
-    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+$product_id = isset($_POST['productId']) ? intval($_POST['productId']) : 0;
+$quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
 
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = [];
-    }
+if ($product_id <= 0) {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid product ID.']);
+    exit;
+}
 
-    $product = new Product();
-    $productDetails = $product->getById($_POST['productId']);
+if ($quantity <= 0) {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid quantity.']);
+    exit;
+}
 
-    // Ensure the cart only includes product ID and quantity
+$product = new Product();
+$productDetails = $product->getById($product_id);
+
+if (!$productDetails) {
+    echo json_encode(['status' => 'error', 'message' => 'Product not found.']);
+    exit;
+}
+
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
+
+// ✅ Increment quantity if product already in cart
+if (isset($_SESSION['cart'][$product_id])) {
+    $_SESSION['cart'][$product_id]['quantity'] += $quantity;
+    $_SESSION['cart'][$product_id]['total'] = $_SESSION['cart'][$product_id]['price'] * $_SESSION['cart'][$product_id]['quantity'];
+} else {
     $_SESSION['cart'][$product_id] = [
         'product_id' => $product_id,
-        'quantity' => $quantity,
         'name' => $productDetails['name'],
         'price' => $productDetails['price'],
         'image_path' => $productDetails['image_path'],
+        'quantity' => $quantity,
         'total' => $productDetails['price'] * $quantity
     ];
+}
 
-    echo json_encode(['status' => 'success', 'message' => 'Product added to cart']);
-
-?>
+echo json_encode(['status' => 'success', 'message' => 'Product added to cart.']);
+exit;
